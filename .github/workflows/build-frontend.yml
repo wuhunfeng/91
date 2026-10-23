@@ -5,7 +5,6 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
-# 显式授权 workflow 拥有写入和提交代码的权限
 permissions:
   contents: write
 
@@ -22,17 +21,30 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies & Build frontend
+      - name: Install dependencies & Build
         run: |
           npm install
           npm run build
+
+      - name: Inspect generated files
+        run: |
+          echo "=== 检查打包后的目录结构 ==="
+          ls -la
 
       - name: Commit and push built assets
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f dist/ public/ build/ 2>/dev/null || true
-          git commit -m "chore: auto-build frontend static assets via GitHub Actions" || echo "No changes to commit"
+          
+          # 自动匹配并强制添加所有常见的打包输出目录
+          for dir in dist build out .next public static; do
+            if [ -d "$dir" ]; then
+              echo "找到构建目录: $dir，准备强制添加..."
+              git add -f "$dir"
+            fi
+          done
+          
+          git commit -m "chore: auto-build and push frontend assets" || echo "No changes to commit"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
