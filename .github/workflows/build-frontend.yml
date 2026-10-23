@@ -1,0 +1,34 @@
+name: Build Frontend Assets
+
+on:
+  push:
+    branches: [ "main", "master" ] # 当你提交代码时自动触发
+  workflow_dispatch: # 支持手动点击触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # 使用 Node.js 18 打包
+
+      - name: Install dependencies & Build frontend
+        run: |
+          npm install
+          npm run build
+
+      - name: Commit and push built assets
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f dist/ public/ build/ 2>/dev/null || true
+          git commit -m "chore: auto-build frontend static assets via GitHub Actions" || echo "No changes to commit"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
