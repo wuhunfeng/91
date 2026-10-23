@@ -17,7 +17,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 1. 设置 Node.js 环境以打包前端
+      # 1. 设置 Node.js 环境并打包前端
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -30,7 +30,7 @@ jobs:
       - name: Build Frontend
         run: npm run build
 
-      # 2. 设置 Go 环境以编译后端
+      # 2. 设置 Go 环境并编译后端
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -38,9 +38,10 @@ jobs:
           cache: true
 
       - name: Build Backend Binary
+        working-directory: ./backend  # 👈 关键点：将工作目录切换到包含 go.mod 的 backend 目录
         run: |
-          mkdir -p bin
-          go build -o bin/server ./cmd/server
+          mkdir -p ../bin
+          go build -o ../bin/server .
 
       # 3. 上传构建产物 (Artifacts)
       - name: Upload Build Artifacts
