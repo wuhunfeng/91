@@ -1,38 +1,53 @@
-name: Build Frontend Assets
+name: Build and Package 91
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
-
-# 显式授权 workflow 拥有写入和提交代码的权限
-permissions:
-  contents: write
 
 jobs:
   build:
+    name: Build Frontend & Backend
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v5
 
+      # 1. 设置 Node.js 环境并打包前端（使用最新稳定版 Node.js 22/24）
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
+          cache: 'npm'
 
-      - name: Install dependencies & Build frontend
-        run: |
-          npm install
-          npm run build
+      - name: Install Frontend Dependencies
+        run: npm ci
 
-      - name: Commit and push built assets
+      - name: Build Frontend
+        run: npm run build
+
+      # 2. 设置 Go 环境并编译后端
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: Build Backend Binary
+        working-directory: ./backend
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f dist/ public/ build/ 2>/dev/null || true
-          git commit -m "chore: auto-build frontend static assets via GitHub Actions" || echo "No changes to commit"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          mkdir -p ../bin
+          go build -o ../bin/server .
+
+      # 3. 上传构建产物 (Artifacts)
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: 91-release-binaries
+          path: |
+            bin/
+            dist/
