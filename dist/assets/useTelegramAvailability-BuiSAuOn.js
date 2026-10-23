@@ -1,0 +1,1 @@
+import{i as e,n as t}from"./jsx-runtime-DyZJNswf.js";import{Jt as n,Zt as r}from"./api-CCrk9P26.js";var i=e(t(),1);function a(){return(0,i.useSyncExternalStore)(r,n,n)}export{a as t};
